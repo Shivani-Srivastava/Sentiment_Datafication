@@ -20,13 +20,13 @@ shinyUI(fluidPage(
         sidebarPanel(
             fileInput("file", "Upload Input data:", placeholder = "NM_Speech.csv"),
             
-            selectInput('TokenType','Select level of tokenization :',c('sentences','lines','paragraphs')),
+            selectInput('TokenType','Select level of tokenization :',c('sentences','lines','words')),
             
             selectInput('Lexicon','Select Sentiment Dictionary :',c('afinn','nrc')),
             
             selectInput('nrc_emots',"Select emotion (NRC)", nrc_emots, selected = "joy"),
             
-            sliderInput('num_chars','Enter number of characters to display',10,400,150),
+            #sliderInput('num_chars','Enter number of characters to display',10,400,150),
             
             actionButton(inputId = "apply",label = "Apply Changes", icon("refresh"))
             
