@@ -30,7 +30,7 @@ split_corpus <- function(corpus0, # raw chronological corpus
     filter(., sentence != "") # drop empty rows 
   }
   else{
-  a01 = unnest_tokens(corpus0, sentence, txt, token=token0) # 0s!
+    a01 = unnest_tokens(corpus0, sentence, txt, token=token0, to_lower = FALSE) # 0s!
   }
   
   # define empty output DF
@@ -42,29 +42,26 @@ split_corpus <- function(corpus0, # raw chronological corpus
   if (nrow(a01) > 100){
     
     k0 = round(nrow(a01)/100, 0)
-    for (i0 in 1:100){
+    for (i0 in 1:99){  # upto 99 only. last will take whatever is left
       a02$percentile[i0] = i0
       start0 = (i0-1)*k0 + 1; stop0 = (i0*k0); start0; stop0
       a02$txt_percentile[i0] = a01$sentence[start0:stop0] %>% str_c(., collapse=" ")
     } # i0 loop ends
+    a02$txt_percentile[100] = a01$sentence[(99*k0+1):nrow(a01)] %>% str_c(., collapse=" ")    
     
   } else {
     
     for (i0 in 1:nrow(a01)){
       
-#      a02 = data.frame(percentile = numeric(100), 
-#                       txt_percentile = character(100), 
-#                       senti_score=numeric(100))
-      
       a02$percentile[i0] = i0
-      # start0 = (i0-1)*k0 + 1; stop0 = (i0*k0); start0; stop0
       a02$txt_percentile[i0] = a01$sentence[i0] # %>% str_c(., collapse=" ")
-      #      a02$senti_score[i0] = suppressMessages(
-      #      afinn_score(a02$txt_percentile[i0], afinn_senti))
       a02 = a02[1:nrow(a01),]   # drop trailing empty rows
     } # i0 loop ends
     
   } # else loop ends.
+  
+  
+  
   return(a02) }  # split_corpus func ends
 
 
@@ -155,7 +152,7 @@ calc_senti_score <- function(corpus0,  # raw chronological corpus
 
 # test-drive abv func
 #system.time({
-outp_list = calc_senti_score(speech, "paragraphs", "afinn", afinn_senti, nrc_senti, "trust")  
+#outp_list = calc_senti_score(speech, "lines", "afinn", afinn_senti, nrc_senti, "trust")  
 #}); head(a00) # 1.25s full corpus
 
 
