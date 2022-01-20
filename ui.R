@@ -1,11 +1,3 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
 
 library(shiny)
 library(plotly)
@@ -19,8 +11,9 @@ shinyUI(fluidPage(
     sidebarLayout(
         sidebarPanel(
             fileInput("file", "Upload Input data:", placeholder = "NM_Speech.csv"),
+            fileInput("file2", "Upload Input data for comparison :", placeholder = "NM_Speech.csv"),
             
-            selectInput('TokenType','Select level of tokenization :',c('sentences','lines','words')),
+            selectInput('TokenType','Select level of tokenization :',c('lines','words')),
             
             selectInput('Lexicon','Select Sentiment Dictionary :',c('afinn','nrc')),
             
@@ -49,12 +42,19 @@ shinyUI(fluidPage(
                                  tableOutput('Senti_Table')
                         ),
                         
-                        tabPanel("Sentiment Plot",
-                                 plotlyOutput('Plot')
-                        ),
+                        tabPanel("Comparison Data",
+                                 h3("The data input for comparison appears like this :"),
+                                 tableOutput('ComparisonData')),
                         
-                        tabPanel("Document Level Analysis"
+                        tabPanel("Sentiment Plot",
+                                 h3('First Dataset'),
                                  
-                        )
+                                 plotlyOutput('Plot'),
+                                 h3('Comparison Dataset'),
+                                 plotlyOutput('VersusPlot')
+                        ),
+                        tabPanel("Word Clouds",
+                                 plotOutput('WordCloud1',height = 700, width = 700),
+                                 plotOutput('WordCloud2',height = 700, width = 700))
             )
         ))))
