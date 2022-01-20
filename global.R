@@ -8,6 +8,8 @@ library(stringr)
 library(ggplot2)
 library(plotly)
 library(tools)
+library(wordcloud)
+library(tibble)
 
 senti_df = read.csv("https://raw.githubusercontent.com/sudhir-voleti/sample-data-sets/master/sentiments.csv")
 
@@ -113,6 +115,87 @@ split2ggplotly <- function(a00){ # , lexicon0="nrc", emots0="joy"
   return(gply0)  } # split2ggplotly func ends
 
 # display plot
+
+dtm_build <- function(raw_corpus, tfidf=FALSE)
+{                  # func opens
+  
+  require(tidytext); require(tibble); require(tidyverse)
+  
+  # converting raw corpus to tibble to tidy DF
+  textdf = data_frame(text = raw_corpus);    textdf  
+  
+  tidy_df = textdf %>%   
+    mutate(doc = row_number()) %>%
+    unnest_tokens(word, text) %>% 
+    anti_join(stop_words) %>%
+    group_by(doc) %>%
+    count(word, sort=TRUE)
+  tidy_df
+  
+  # evaluating IDF wala DTM
+  if (tfidf == "TRUE") {
+    textdf1 = tidy_df %>% 
+      group_by(doc) %>% 
+      count(word, sort=TRUE) %>% ungroup() %>%
+      bind_tf_idf(word, doc, nn) %>%   # 'nn' is default colm name
+      rename(value = tf_idf)} else { textdf1 = tidy_df %>% rename(value = n)  } 
+  
+  textdf1
+  
+  dtm = textdf1 %>% cast_sparse(doc, word, value);    dtm[1:9, 1:9]
+  
+  # order rows and colms putting max mass on the top-left corner of the DTM
+  colsum = apply(dtm, 2, sum)    
+  col.order = order(colsum, decreasing=TRUE)
+  row.order = order(rownames(dtm) %>% as.numeric())
+  
+  dtm1 = dtm[row.order, col.order];    dtm1[1:8,1:8]
+  
+  return(dtm1)  } 
+
+dtm.word.count <- function(dtm) {
+  
+  if (ncol(dtm) > 1000) {
+    tst = round(ncol(dtm)/100)  # divide DTM's cols into 100 manageble parts
+    a = rep(tst,99)
+    b = cumsum(a);rm(a)
+    b = b[-which(b >= ncol(dtm))]
+    b = c(0,b,ncol(dtm))
+    
+    ss.col = c(NULL)
+    for (i in 1:(length(b)-1)) {
+      tempdtm = dtm[,(b[i]+1):(b[i+1])]
+      s = colSums(as.matrix(tempdtm))
+      ss.col = c(ss.col,s)
+    }
+  } else {
+    ss.col = colSums(as.matrix(dtm))
+  }
+  
+  tsum = ss.col
+  # tsum = tsum[order(tsum, decreasing = T)]       #terms in decreasing order of freq
+  return(tsum)
+}
+
+
+dtm.word.cloud <- function(count = count, max.words = 100,title = "Title"){
+  
+  if (class(count)[1] == "DocumentTermMatrix"|class(count)[1] == "simple_triplet_matrix")
+  {
+    tsum = dtm.word.count(count)
+  } else {
+    tsum = count
+  }
+  
+  if (class(tsum) != "numeric") stop("Give input as wordcount or DocumentTermMatrix")
+  
+  wordcloud(names(tsum), tsum,     # words, their freqs 
+            scale = c(4, 1),     # range of word sizes
+            min.freq = .01,                     # min.freq of words to consider
+            max.words = max.words,       # max #words
+            colors = brewer.pal(8, "Dark2"))    # Plot results in a word cloud 
+  title(sub = title)     # title for the wordcloud display
+}   
 
 calc_senti_score <- function(corpus0,  # raw chronological corpus
                              token0,    # split type among c("sentence", "paragraphs", "lines")
