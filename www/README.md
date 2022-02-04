@@ -1,0 +1,1 @@
+Contains global variables
