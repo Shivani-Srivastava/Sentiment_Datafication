@@ -31,6 +31,11 @@ shinyUI(fluidPage(
                         
                         tabPanel("Overview",
                                  h4(p("Visualizing Sentiment as Time Series")),
+                                 p("This app takes long text(s) as input and plots the sentiment reflected by each line or sentence from the start to end. 
+                                    The first two tabs show how the back-end breaks the data into usable inputs for sentiment identification, the words that contribute
+                                    to the sentiment and the score for that sentence. The third tab plots these sentiment scores on a graph for visual comparison. 
+                                    The final tab shows the wordcloud for the sentiment creating words."), br(),
+                                 p("Please note that this application is a work in development so some errors may arise during WordCloud generation."),
                                  h4(p("Download Sample Input File")),
                                  downloadButton('downloadData', 'Download Example file')
                                  
