@@ -21,7 +21,107 @@ nrc_senti = senti_df %>% filter(., lexicon == "nrc") %>%
 
 nrc_emots = table(nrc_senti$sentiment) %>% names(); nrc_emots # list of 10
 
-split_corpus <- function(corpus0, # raw chronological corpus
+afinn_score <- function(subcorpus0, afinn_senti){
+  
+  b0 = tibble(txt = subcorpus0) %>% unnest_tokens(word, txt) %>%
+    inner_join(afinn_senti) %>% select(word, value)
+
+  if (nrow(b0)>0) {
+    b1 = b0 %>% select(value) %>% sum(.)
+    b0a = str_c(b0$word, collapse=" ") %>% str_replace_all(., " ", ", ")
+  } else {b1 = 0; b0a = "none"}
+  
+  return(list(b0a, b1))  }
+
+partition_corpus <- function(corpus0, txt){ # txt is name of text colm in corpus
+
+    a01 = corpus0 |> unnest_tokens(tokens, txt)
+
+  suppressMessages({
+  # define empty output DF
+  a02 = data.frame(percentile = numeric(100), 
+                   txt_percentile = character(100),
+                   senti_tooltip = character(100),
+                   senti_score=numeric(100))
+
+  num_toks_per_unit = round(nrow(a01)/100, 0); num_toks_per_unit
+  
+  for (i0 in 1:99){
+    
+    start0 = (i0-1)*num_toks_per_unit + 1; start0
+    stop0 = i0*num_toks_per_unit; stop0
+    a03 = str_c(a01$tokens[start0:stop0], collapse=" ")
+    a04 = afinn_score(a03, afinn_senti)
+    
+    # populate empty DF ka row
+    a02$percentile[i0] = i0
+    a02$txt_percentile[i0] = a03
+    a02$senti_tooltip[i0] = a04[[1]]
+    a02$senti_score[i0] = a04[[2]]
+    
+  } # i0 loop ends
+  
+  start0 = i0*num_toks_per_unit + 1
+  stop0 = nrow(a01)
+  a03 = str_c(a01$tokens[start0:stop0], collapse=" ")
+  a04 = afinn_score(a03, afinn_senti)
+
+  # populate empty DF ka row
+  a02$percentile[100] = 100
+  a02$txt_percentile[100] = a03
+  a02$senti_tooltip[100] = a04[[1]]
+  a02$senti_score[100] = a04[[2]]
+  
+  })  # suppress ends
+
+  return(a02)} # partition_corpus func ends  
+
+repartition_df <- function(a02, 
+                           nbreaks=10){ # nbreaks == factor of 100, UI input
+  
+  k1 = nrow(a02)/nbreaks; k1
+  
+  a03 = a02[1:nbreaks,]; #glimpse(a03)
+  
+  for (i0 in 1:nbreaks){
+    start0 = (i0-1)*k1 + 1; stop0 = i0*k1; start0;stop0
+    sub_df0 = a02[start0:stop0,]
+    b01 = str_c(sub_df0$tokens, collapse=" ")
+    b02 = str_c(sub_df0$senti_tooltip, collapse=", ")
+    
+    a03$percentile[i0] = stop0
+    a03$txt_percentile[i0] = b01
+    a03$senti_tooltip[i0] = b02
+    a03$senti_score[i0] = mean(sub_df0$senti_score)
+  }
+  
+  return(a03) } # func ends
+
+## plot chrono-sentimt on ggplotly with a02 DF input
+split2ggplotly <- function(a02, nbreaks=100){ # nbreaks is factor of 100
+  
+    a03 = repartition_df(a02, nbreaks = nbreaks)   
+  
+    # build ggplot object
+    p <- ggplot(a03, aes(x=percentile, y=senti_score)) +
+      
+      # below extracts only first 150 chars to display in plotly
+      geom_point(color="black") +
+      #geom_text(aes(label = senti_tooltip), color="black") + 
+      
+      # build line and fill area below it
+      geom_line(color="black", lty=1) +
+      geom_area(aes(y=senti_score), fill="light blue") +
+      
+      # build neutral wala line
+      geom_hline(aes(yintercept=0), color="black") 
+    
+    gply0 = ggplotly(p, tooltip = c("x", "y"))    # , "txt"
+    
+  gply0  } # split2ggplotly func ends
+
+
+split_corpus_old <- function(corpus0, # raw chronological corpus
                          token0){ # split type among c("sentence", "paragraphs", "lines") 
   
   corpus0 = data.frame(txt = as.character(corpus0))
@@ -95,7 +195,7 @@ nrc_score <- function(subcorpus0, nrc_senti, emots0="joy"){
 
 
 
-split2ggplotly <- function(a00){ # , lexicon0="nrc", emots0="joy"
+split2ggplotly_old <- function(a00){ # , lexicon0="nrc", emots0="joy"
   
   # build ggplot object
   p <- ggplot(a00, aes(x=percentile, y=senti_score)) +
