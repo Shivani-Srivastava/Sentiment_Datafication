@@ -13,7 +13,7 @@ shinyUI(fluidPage(
             fileInput("file", "Upload Input data:", placeholder = "NM_Speech.csv"),
             fileInput("file2", "Upload Input data for comparison :", placeholder = "NM_Speech.csv"),
             
-            selectInput('TokenType','Select level of tokenization :',c('lines','words')),
+            #selectInput('TokenType','Select level of tokenization :',c('lines','words')),
             
             selectInput('Lexicon','Select Sentiment Dictionary :',c('afinn','nrc')),
             
